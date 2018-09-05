@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <div class="logo">
+    <router-link class="logo" to="/">
       <img src="@/assets/OlympeakGaming.svg">
-    </div>
+    </router-link>
     <div class="nav">
       <a href="https://twitch.tv/olympeakgaming" target="_blank">
         <font-awesome-icon :icon="['fab', 'twitch']" />
@@ -19,7 +19,7 @@
     </div>
     <router-view/>
     <div class="footer">
-      Réalisation : Cédric D.
+      Réalisation : Cédric D. - Olympeak Gaming ©{{ new Date().getFullYear() }}
     </div>
   </div>
 </template>
@@ -68,9 +68,28 @@ body {
   }
 }
 
-.logo {
+a[href] {
+  color: $primary;
+  display: inline-block;
+  text-decoration: none;
+
+  &:hover {
+    color: inherit;
+  }
+}
+
+.nav a[href] {
+  margin: 8px 15px 15px;
+
+  @media screen and (min-width: $screen-md) {
+    margin-top: 0;
+  }
+}
+
+a.logo {
   display: inline-block;
   height: 180px;
+  margin: 0 auto;
   overflow: hidden;
   width: 180px;
 
@@ -82,21 +101,11 @@ body {
   }
 }
 
-a[href] {
-  color: $primary;
-  display: inline-block;
-  margin: 8px 15px 15px;
-  text-decoration: none;
-
-  &:hover {
-    color: inherit;
-  }
-}
-
 .footer {
-  font-size: 75%;
+  font-size: 65%;
   font-weight: 300;
   margin-top: 10px;
+  padding-bottom: .8rem;
   opacity: .5;
 }
 </style>

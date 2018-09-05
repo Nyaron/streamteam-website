@@ -8,8 +8,14 @@
           :key="stream.channel"
           :class="[{live: stream.isLive}, {active: activeStream === stream.channel}]"
           @click="changeStream(stream.channel)">
-          <img :src="stream.channelData.logo" :alt="stream.channel" :title="stream.channel">
+          <img
+            :src="stream.channelData.profile_image_url"
+            :alt="stream.channel"
+            :title="stream.channel">
         </button>
+        <router-link :to="`/streamer/${activeStream}`">
+          En savoir plus sur {{ activeStream | capitalize }}
+        </router-link>
       </div>
       <div class="stream-list-players">
         <single-stream
@@ -40,36 +46,99 @@ export default {
     return {
       streamsData: [
         {
-          channel: 'name',
+          channel: 'olympeakgaming',
+          channelData: [],
+          streamData: [],
+          isLive: false,
+        },
+        {
+          channel: 'nyaron',
+          channelData: [],
+          streamData: [],
+          isLive: false,
+        },
+        {
+          channel: 'sanctar',
+          channelData: [],
+          streamData: [],
+          isLive: false,
+        },
+        {
+          channel: 'julioyuki',
           channelData: [],
           streamData: [],
           isLive: false,
         },
       ],
-      activeStream: 'name',
+      activeStream: 'olympeakgaming',
     };
   },
   methods: {
     changeStream(stream) {
       this.activeStream = stream;
     },
+    checkStreamsStatus() {
+      const self = this;
+      const requestOptions = {
+        headers: { 'Client-ID': process.env.TWITCH_ID },
+        params: {
+          user_login: [],
+        },
+      };
+
+      self.streamsData.forEach((stream) => {
+        requestOptions.params.user_login.push(stream.channel);
+      });
+
+      Vue.http.get('https://api.twitch.tv/helix/streams/', requestOptions).then((response) => {
+        if (response.status === 200 && typeof response.body !== 'undefined') {
+          self.streamsData.forEach((channel, index) => {
+            const t = response.body.data.findIndex(stream =>
+              stream.user_id === channel.channelData.id);
+            if (t > -1) {
+              self.streamsData[index].streamData = response.body.data[t];
+              self.streamsData[index].isLive = true;
+            } else {
+              self.streamsData[index].streamData = [];
+              self.streamsData[index].isLive = false;
+            }
+          });
+        }
+      }, (response) => {
+        window.eventBus.$emit('error', { source: 'streamList', data: response });
+      });
+    },
   },
   mounted() {
     const self = this;
-    self.streamsData.forEach((item, index) => {
-      self.$http.get(`https://api.twitch.tv/kraken/channels/${item.channel}?client_id=${process.env.TWITCH_ID}`).then((response) => {
-        if (response.status === 200 && typeof response.body !== 'undefined') {
-          self.streamsData[index].channelData = response.body;
-        }
-      // TODO: Error handling
-      // eslint-disable-next-line
-      }, (response) => {
-        // eslint-disable-next-line
-        console.log(response);
-      });
+    const requestOptions = {
+      headers: { 'Client-ID': process.env.TWITCH_ID },
+      params: {
+        login: [],
+      },
+    };
+
+    self.streamsData.forEach((stream) => {
+      requestOptions.params.login.push(stream.channel);
     });
-  },
-  watch: {
+
+    Vue.http.get('https://api.twitch.tv/helix/users/', requestOptions).then((response) => {
+      if (response.status === 200 && typeof response.body !== 'undefined') {
+        response.body.data.forEach((user) => {
+          self.streamsData.forEach((channel, index) => {
+            if (channel.channel === user.login) {
+              self.streamsData[index].channelData = user;
+            }
+          });
+        });
+        self.checkStreamsStatus();
+        setInterval(() => {
+          self.checkStreamsStatus();
+        }, 600000);
+      }
+    }, (response) => {
+      window.eventBus.$emit('error', { source: 'streamList', data: response });
+    });
   },
 };
 </script>
@@ -88,6 +157,10 @@ export default {
 
     @media screen and (min-width: $screen-md) {
       width: 10%;
+    }
+
+    @media screen and (min-width: $screen-lg) {
+      width: 8%;
     }
   }
 
@@ -123,13 +196,18 @@ export default {
 
   &-players {
     margin-left: 25%;
-    min-height: calc(100vh - 280px);
+    min-height: 480px;
     position: relative;
     width: 75%;
 
     @media screen and (min-width: $screen-md) {
       margin-left: 10%;
       width: 90%;
+    }
+
+    @media screen and (min-width: $screen-lg) {
+      margin-left: 8%;
+      width: 92%;
     }
 
     > div {
