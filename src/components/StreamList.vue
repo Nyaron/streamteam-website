@@ -13,9 +13,6 @@
             :alt="stream.channel"
             :title="stream.channel">
         </button>
-        <router-link :to="`/streamer/${activeStream}`">
-          En savoir plus sur {{ activeStream | capitalize }}
-        </router-link>
       </div>
       <div class="stream-list-players">
         <single-stream
@@ -75,7 +72,11 @@ export default {
   },
   methods: {
     changeStream(stream) {
-      this.activeStream = stream;
+      if (this.activeStream !== stream) {
+        this.activeStream = stream;
+      } else {
+        this.$router.push({ name: 'streamer-home', params: { channel: stream } });
+      }
     },
     checkStreamsStatus() {
       const self = this;

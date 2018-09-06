@@ -8,7 +8,7 @@
       Accueil
     </router-link>
     <router-link
-      :to="{ name: 'streamer', params: { channel: channel }}"
+      :to="{ name: 'streamer-home', params: { channel: channel }}"
       :style="{ color: genColor }"
       exact>
       Stream
@@ -33,12 +33,10 @@ const generate = require('string-to-color');
 
 export default {
   name: 'StreamerNav',
-  props: {
-    channel: String,
-  },
   data() {
     return {
-      genColor: generate(this.channel),
+      channel: this.$route.params.channel,
+      genColor: generate(this.$route.params.channel),
     };
   },
 };
@@ -46,14 +44,20 @@ export default {
 
 <style lang="scss">
 .streamer-nav {
+  background-color: rgba(255, 255, 255, .1);
+  border-radius: 2em;
+  color: $primary;
+  display: inline-block;
+  margin-bottom: 15px;
+  padding: .5em;
+
+  a[href],
+  .nav-title {
+    margin: 0 15px;
+  }
+
   .nav-title {
     display: inline-block;
-    font-size: 125%;
-    margin: 8px 15px 15px;
-
-    @media screen and (min-width: $screen-md) {
-      margin-top: 0;
-    }
 
     &::after {
       content: "⚡";
