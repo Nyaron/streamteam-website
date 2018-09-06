@@ -11,9 +11,11 @@
     "build": "node build/build.js"
   },
   "dependencies": {
-    "@fortawesome/fontawesome": "^1.1.4",
-    "@fortawesome/fontawesome-free-brands": "^5.0.7",
-    "@fortawesome/vue-fontawesome": "^0.0.22",
+    "@fortawesome/fontawesome": "^1.1.8",
+    "@fortawesome/fontawesome-svg-core": "^1.2.4",
+    "@fortawesome/free-brands-svg-icons": "^5.3.1",
+    "@fortawesome/free-solid-svg-icons": "^5.3.1",
+    "@fortawesome/vue-fontawesome": "0.0.22",
     "axios": "^0.18.0",
     "string-to-color": "^2.0.0",
     "vue": "^2.5.2",
