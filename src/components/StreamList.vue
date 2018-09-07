@@ -12,6 +12,7 @@
             :src="stream.channelData.profile_image_url"
             :alt="stream.channel"
             :title="stream.channel">
+          <font-awesome-icon :icon="['fas', 'external-link-square-alt']"></font-awesome-icon>
         </button>
       </div>
       <div class="stream-list-players">
@@ -173,12 +174,31 @@ export default {
     margin-bottom: 10px;
     outline: 0;
     padding: 0;
+    position: relative;
 
     img {
       display: block;
       filter: grayscale(100%);
       height: auto;
       max-width: 100%;
+    }
+
+    .svg-inline--fa {
+      display: none;
+      bottom: 50%;
+      color: #FFF;
+      height: auto;
+      position: absolute;
+      right: 50%;
+      transform: translate(50%, 50%);
+      width: 60%;
+
+      @media screen and (min-width: $screen-md) {
+        bottom: 8px;
+        right: 8px;
+        transform: none;
+        width: 20%;
+      }
     }
 
     &.live {
@@ -191,6 +211,19 @@ export default {
       img {
         outline: 2px solid $primary;
         outline-offset: -6px;
+      }
+
+      .svg-inline--fa {
+        display: block;
+      }
+
+      &:hover {
+        .svg-inline--fa {
+          bottom: 50%;
+          right: 50%;
+          transform: translate(50%, 50%);
+          width: 60%;
+        }
       }
     }
   }
