@@ -12,6 +12,10 @@
         <font-awesome-icon :icon="['fab', 'twitter']" />
         Twitter
       </a>
+      <a href="https://discord.me/olympeakgaming" target="_blank">
+        <font-awesome-icon :icon="['fab', 'discord']" />
+        Discord
+      </a>
       <a href="https://facebook.com/olympeakgaming" target="_blank">
         <font-awesome-icon :icon="['fab', 'facebook']" />
         Facebook
