@@ -2,11 +2,15 @@
 
 > Our website
 
+## Config
+
+Rename `prod.env.js.tmp` to `prod.env.js` and fill with the right config.
+
 ## Build Setup
 
 ``` bash
 # install dependencies
-yarn install
+yarn
 
 # serve with hot reload at localhost:8080
 yarn run dev
