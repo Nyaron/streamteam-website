@@ -1,27 +1,28 @@
 <template>
-  <div>
+  <div class="stream-list">
     <div class="stream-list-wrapper">
       <div class="stream-list-users">
         <button
           class="stream-list-user"
-          v-for="stream in streamsData"
-          :key="stream.channel"
-          :class="[{live: stream.isLive}, {active: activeStream === stream.channel}]"
-          @click="changeStream(stream.channel)">
+          v-for="stream in filteredStreamers"
+          :key="stream.login"
+          :class="[{live: liveStreams[stream.login] && liveStreams[stream.login].length > 0},
+          {active: activeStream === stream.login}]"
+          @click="changeStream(stream.login)">
           <img
-            :src="stream.channelData.profile_image_url"
-            :alt="stream.channel"
-            :title="stream.channel">
+            :src="stream.profile_image_url"
+            :alt="stream.login"
+            :title="stream.login">
           <font-awesome-icon :icon="['fas', 'external-link-square-alt']"></font-awesome-icon>
         </button>
       </div>
       <div class="stream-list-players">
         <single-stream
-          v-for="stream in streamsData"
-          :key="stream.channel"
-          :class="{active: activeStream === stream.channel}"
-          :streamer-channel="stream.channel"
-          :is-active="activeStream === stream.channel"
+          v-for="stream in filteredStreamers"
+          :key="stream.login"
+          :class="{active: activeStream === stream.login}"
+          :streamer-channel="stream.login"
+          :is-active="activeStream === stream.login"
           >
         </single-stream>
       </div>
@@ -33,6 +34,7 @@
 import Vue from 'vue';
 import VueResource from 'vue-resource';
 
+import db from '../main';
 import SingleStream from './SingleStream';
 
 Vue.use(VueResource);
@@ -42,32 +44,7 @@ export default {
   components: { SingleStream },
   data() {
     return {
-      streamsData: [
-        {
-          channel: 'olympeakgaming',
-          channelData: [],
-          streamData: [],
-          isLive: false,
-        },
-        {
-          channel: 'nyaron',
-          channelData: [],
-          streamData: [],
-          isLive: false,
-        },
-        {
-          channel: 'sanctar',
-          channelData: [],
-          streamData: [],
-          isLive: false,
-        },
-        {
-          channel: 'julioyuki',
-          channelData: [],
-          streamData: [],
-          isLive: false,
-        },
-      ],
+      liveStreams: [],
       activeStream: 'olympeakgaming',
     };
   },
@@ -88,21 +65,27 @@ export default {
         },
       };
 
-      self.streamsData.forEach((stream) => {
-        requestOptions.params.user_login.push(stream.channel);
+      self.filteredStreamers.forEach((stream) => {
+        requestOptions.params.user_login.push(stream.login);
       });
 
       Vue.http.get('https://api.twitch.tv/helix/streams/', requestOptions).then((response) => {
         if (response.status === 200 && typeof response.body !== 'undefined') {
-          self.streamsData.forEach((channel, index) => {
+          self.filteredStreamers.forEach((channel, index) => {
             const t = response.body.data.findIndex(stream =>
-              stream.user_id === channel.channelData.id);
+              stream.user_id === channel.user_id);
             if (t > -1) {
-              self.streamsData[index].streamData = response.body.data[t];
-              self.streamsData[index].isLive = true;
+              self.liveStreams[channel.login] = response.body.data[t];
+              db.collection('streamers').doc(self.filteredStreamers[index].id).get()
+                .then((origDoc) => {
+                  if (origDoc.exists) {
+                    const finalDoc = origDoc.data();
+                    finalDoc.last_live = new Date();
+                    db.collection('streamers').doc(self.filteredStreamers[index].id).set(finalDoc);
+                  }
+                });
             } else {
-              self.streamsData[index].streamData = [];
-              self.streamsData[index].isLive = false;
+              self.liveStreams[channel.login] = [];
             }
           });
         }
@@ -111,36 +94,34 @@ export default {
       });
     },
   },
-  mounted() {
-    const self = this;
-    const requestOptions = {
-      headers: { 'Client-ID': process.env.TWITCH_ID },
-      params: {
-        login: [],
-      },
-    };
-
-    self.streamsData.forEach((stream) => {
-      requestOptions.params.login.push(stream.channel);
-    });
-
-    Vue.http.get('https://api.twitch.tv/helix/users/', requestOptions).then((response) => {
-      if (response.status === 200 && typeof response.body !== 'undefined') {
-        response.body.data.forEach((user) => {
-          self.streamsData.forEach((channel, index) => {
-            if (channel.channel === user.login) {
-              self.streamsData[index].channelData = user;
+  computed: {
+    filteredStreamers() {
+      const self = this;
+      if (self.$streamers) {
+        return self.$streamers.sort((a, b) => {
+          // Sort streamers per position then by last live
+          if (a.position === b.position) {
+            const aLive = a.last_live.toDate();
+            const bLive = b.last_live.toDate();
+            if (aLive < bLive) {
+              return 1;
             }
-          });
+            if (aLive > bLive) {
+              return -1;
+            }
+            return 0;
+          }
+          return (a.position < b.position) ? 1 : -1;
         });
-        self.checkStreamsStatus();
-        setInterval(() => {
-          self.checkStreamsStatus();
-        }, 600000);
       }
-    }, (response) => {
-      window.eventBus.$emit('error', { source: 'streamList', data: response });
-    });
+      return [];
+    },
+  },
+  mounted() {
+    this.checkStreamsStatus();
+    window.setInterval(() => {
+      this.checkStreamsStatus();
+    }, 600000);
   },
 };
 </script>

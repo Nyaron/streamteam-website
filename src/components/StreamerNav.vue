@@ -1,6 +1,13 @@
 <template>
   <div class="nav streamer-nav">
-    <div class="nav-title">{{ channel | capitalize }}</div>
+    <div class="nav-title" :title="streamerType | capitalize">
+      {{ channel | capitalize }}
+      <font-awesome-icon
+        :icon="streamerType === 'affiliate' ? 'star' :
+        streamerType === 'partner' ? 'check-circle' :
+        ''">
+      </font-awesome-icon>
+    </div>
     <router-link
       to="/"
       :style="{ color: genColor }"
@@ -39,6 +46,17 @@ export default {
       genColor: generate(this.$route.params.channel),
     };
   },
+  computed: {
+    streamerType() {
+      const self = this;
+      if (self.$streamers) {
+        const curr = self.$streamers.find(streamer =>
+          streamer.login === self.$route.params.channel);
+        return curr.broadcaster_type ? curr.broadcaster_type : '';
+      }
+      return '';
+    },
+  },
 };
 </script>
 
@@ -57,13 +75,8 @@ export default {
   }
 
   .nav-title {
+    cursor: default;
     display: inline-block;
-
-    &::after {
-      content: "⚡";
-      display: inline-block;
-      margin-left: .5em;
-    }
   }
 
   .router-link-active {

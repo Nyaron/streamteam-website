@@ -1,44 +1,29 @@
 <template>
   <div class="streamer-about">
     <img
-      :src="channelData.profile_image_url"
+      :src="filteredStreamer.profile_image_url"
       :alt="channel"
       :title="channel">
-    <h1>{{ channelData.display_name }}</h1>
-    <p>{{ channelData.description }}</p>
+    <h1>{{ filteredStreamer.display_name }}</h1>
+    <p>{{ filteredStreamer.description }}</p>
   </div>
 </template>
 
 <script>
-import Vue from 'vue';
-import VueResource from 'vue-resource';
-
-Vue.use(VueResource);
-
 export default {
   name: 'StreamerAbout',
   data() {
     return {
       channel: this.$route.params.channel,
-      channelData: [],
     };
   },
-  mounted() {
-    const self = this;
-    const requestOptions = {
-      headers: { 'Client-ID': process.env.TWITCH_ID },
-      params: {
-        login: self.channel,
-      },
-    };
-
-    Vue.http.get('https://api.twitch.tv/helix/users/', requestOptions).then((response) => {
-      if (response.status === 200 && typeof response.body !== 'undefined') {
-        self.channelData = response.body.data[0];
+  computed: {
+    filteredStreamer() {
+      if (this.$streamers) {
+        return this.$streamers.find(streamer => streamer.login === this.channel);
       }
-    }, (response) => {
-      window.eventBus.$emit('error', { source: 'streamerAbout', data: response });
-    });
+      return [];
+    },
   },
 };
 </script>

@@ -46,8 +46,8 @@ export default {
     },
   },
   watch: {
-    isActive() {
-      if (this.isActive) {
+    isActive(b) {
+      if (b) {
         if (this.embed !== null) {
           this.embed.getPlayer().play();
         } else {
