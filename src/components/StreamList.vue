@@ -39,6 +39,11 @@ import SingleStream from './SingleStream';
 
 Vue.use(VueResource);
 
+Vue.http.interceptors.push((request, next) => {
+  request.headers.set('Client-ID', process.env.TWITCH_ID);
+  next();
+});
+
 export default {
   name: 'StreamList',
   components: { SingleStream },
@@ -58,18 +63,12 @@ export default {
     },
     checkStreamsStatus() {
       const self = this;
-      const requestOptions = {
-        headers: { 'Client-ID': process.env.TWITCH_ID },
-        params: {
-          user_login: [],
-        },
+      const resource = this.$resource('https://api.twitch.tv/helix/streams{?user_login*}');
+      const requestParams = {
+        user_login: self.filteredStreamers.map(stream => stream.login),
       };
 
-      self.filteredStreamers.forEach((stream) => {
-        requestOptions.params.user_login.push(stream.login);
-      });
-
-      Vue.http.get('https://api.twitch.tv/helix/streams/', requestOptions).then((response) => {
+      resource.get(requestParams).then((response) => {
         if (response.status === 200 && typeof response.body !== 'undefined') {
           self.filteredStreamers.forEach((channel, index) => {
             const t = response.body.data.findIndex(stream =>
@@ -111,7 +110,7 @@ export default {
             }
             return 0;
           }
-          return (a.position < b.position) ? 1 : -1;
+          return (a.position < b.position) ? -1 : 1;
         });
       }
       return [];
