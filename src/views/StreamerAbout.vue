@@ -1,9 +1,6 @@
 <template>
   <div class="streamer-about">
-    <img
-      :src="filteredStreamer.profile_image_url"
-      :alt="channel"
-      :title="channel">
+    <img :src="filteredStreamer.profile_image_url" :alt="channel" :title="channel" />
     <h1>{{ filteredStreamer.display_name }}</h1>
     <p>{{ filteredStreamer.description }}</p>
   </div>
@@ -19,8 +16,8 @@ export default {
   },
   computed: {
     filteredStreamer() {
-      if (this.$streamers) {
-        return this.$streamers.find(streamer => streamer.login === this.channel);
+      if (this.$store.state.streamers) {
+        return this.$store.state.streamers.find(streamer => streamer.login === this.channel);
       }
       return [];
     },
@@ -40,7 +37,7 @@ export default {
     border: 1px solid #dee2e6;
     border-radius: 50%;
     height: 50px;
-    padding: .25rem;
+    padding: 0.25rem;
     width: 50px;
 
     @media screen and (min-width: $screen-lg) {

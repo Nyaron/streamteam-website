@@ -18,10 +18,6 @@ export default {
   data() {
     return {
       embed: null,
-      options: {
-        height: 480,
-        width: 940,
-      },
     };
   },
   methods: {
@@ -30,8 +26,6 @@ export default {
       Vue.loadScript('https://embed.twitch.tv/embed/v1.js').then(() => {
         // eslint-disable-next-line no-undef
         self.embed = new Twitch.Embed(self.$el, {
-          width: self.options.width,
-          height: self.options.height,
           theme: 'dark',
           channel: self.streamerChannel,
           layout: self.showChat ? 'video-with-chat' : 'video',
@@ -66,3 +60,20 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+.stream-single {
+  overflow: hidden;
+  padding-top: 56.25%;
+  position: relative;
+
+  > iframe {
+    border: 0;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+}
+</style>

@@ -12,7 +12,7 @@ RewriteRule ^/?(.*) https://%{SERVER_NAME}/$1 [R,L]
 # HSTS HEADER
 # Recommanded value: 15778800 (half a year)
 # Public deployment: https://hstspreload.appspot.com/
-Header set Strict-Transport-Security "max-age=31557600; includeSubDomains; preload"
+Header set Strict-Transport-Security "max-age=15778800; includeSubDomains; preload"
 
 # HISTORY MODE FOR THE ROUTER
 <IfModule mod_rewrite.c>

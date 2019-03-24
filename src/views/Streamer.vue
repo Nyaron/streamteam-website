@@ -6,7 +6,7 @@
 </template>
 
 <script>
-import StreamerNav from './StreamerNav';
+import StreamerNav from '@/components/StreamerNav';
 
 export default {
   name: 'Streamer',
@@ -14,8 +14,12 @@ export default {
   computed: {
     isOG() {
       const self = this;
-      if (self.$streamers) {
-        if (typeof self.$streamers.find(streamer => streamer.login === self.$route.params.channel) === 'undefined') {
+      if (self.$store.state.streamers) {
+        if (
+          typeof self.$store.state.streamers.find(
+            streamer => streamer.login === self.$route.params.channel
+          ) === 'undefined'
+        ) {
           self.$router.push({ path: '/' });
         }
         return true;

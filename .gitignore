@@ -1,12 +1,21 @@
 .DS_Store
-node_modules/
-/dist/
+node_modules
+/dist
+
+/tests/e2e/reports/
+selenium-debug.log
+
+# Ignore config file
+/src/config.js
+
+# local env files
+.env.local
+.env.*.local
+
+# Log files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Ignore production config file
-/config/prod.env.js
 
 # Editor directories and files
 .idea

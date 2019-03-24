@@ -5,10 +5,12 @@
 </template>
 
 <script>
-import StreamList from './StreamList';
+import StreamList from '@/components/StreamList.vue';
 
 export default {
   name: 'Home',
-  components: { StreamList },
+  components: {
+    StreamList,
+  },
 };
 </script>

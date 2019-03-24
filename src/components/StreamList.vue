@@ -1,29 +1,29 @@
 <template>
   <div class="stream-list">
     <div class="stream-list-wrapper">
-      <div class="stream-list-users">
+      <div class="stream-list-users" ref="streamersList">
         <button
           class="stream-list-user"
           v-for="stream in filteredStreamers"
           :key="stream.login"
-          :class="[{live: liveStreams[stream.login] && liveStreams[stream.login].length > 0},
-          {active: activeStream === stream.login}]"
-          @click="changeStream(stream.login)">
-          <img
-            :src="stream.profile_image_url"
-            :alt="stream.login"
-            :title="stream.login">
+          :class="[
+            { live: livestreams[stream.login] && livestreams[stream.login].length > 0 },
+            { active: activeStream === stream.login },
+          ]"
+          @click="changeStream(stream.login)"
+        >
+          <img :src="stream.profile_image_url" :alt="stream.login" :title="stream.login" />
           <font-awesome-icon :icon="['fas', 'external-link-square-alt']"></font-awesome-icon>
         </button>
       </div>
-      <div class="stream-list-players">
+      <div class="stream-list-players" ref="streamersPlayer">
         <single-stream
           v-for="stream in filteredStreamers"
           :key="stream.login"
-          :class="{active: activeStream === stream.login}"
+          :class="{ active: activeStream === stream.login }"
           :streamer-channel="stream.login"
           :is-active="activeStream === stream.login"
-          >
+        >
         </single-stream>
       </div>
     </div>
@@ -31,25 +31,15 @@
 </template>
 
 <script>
-import Vue from 'vue';
-import VueResource from 'vue-resource';
-
-import db from '../main';
-import SingleStream from './SingleStream';
-
-Vue.use(VueResource);
-
-Vue.http.interceptors.push((request, next) => {
-  request.headers.set('Client-ID', process.env.TWITCH_ID);
-  next();
-});
+import axios from 'axios';
+import { config } from '@/config';
+import SingleStream from '@/components/SingleStream';
 
 export default {
   name: 'StreamList',
   components: { SingleStream },
   data() {
     return {
-      liveStreams: [],
       activeStream: 'olympeakgaming',
     };
   },
@@ -63,57 +53,52 @@ export default {
     },
     checkStreamsStatus() {
       const self = this;
-      const resource = this.$resource('https://api.twitch.tv/helix/streams{?user_login*}');
-      const requestParams = {
-        user_login: self.filteredStreamers.map(stream => stream.login),
-      };
-
-      resource.get(requestParams).then((response) => {
-        if (response.status === 200 && typeof response.body !== 'undefined') {
-          self.filteredStreamers.forEach((channel, index) => {
-            const t = response.body.data.findIndex(stream =>
-              stream.user_id === channel.user_id);
-            if (t > -1) {
-              self.liveStreams[channel.login] = response.body.data[t];
-              db.collection('streamers').doc(self.filteredStreamers[index].id).get()
-                .then((origDoc) => {
-                  if (origDoc.exists) {
-                    const finalDoc = origDoc.data();
-                    finalDoc.last_live = new Date();
-                    db.collection('streamers').doc(self.filteredStreamers[index].id).set(finalDoc);
-                  }
-                });
-            } else {
-              self.liveStreams[channel.login] = [];
-            }
-          });
-        }
-      }, (response) => {
-        window.eventBus.$emit('error', { source: 'streamList', data: response });
-      });
+      axios
+        .get('https://api.twitch.tv/helix/streams/', {
+          headers: { 'Client-ID': config.twitch.twitchClientId },
+          params: {
+            user_id: self.streamers.map(streamer => streamer.user_id),
+          },
+        })
+        .then(response => {
+          if (response.status === 200 && typeof response.data !== 'undefined') {
+            const responseData = response.data.data;
+            self.streamers.forEach(channel => {
+              const liveData = responseData.find(stream => stream.user_id === channel.user_id);
+              this.$store.dispatch('updateLastLive', {
+                docId: channel.id,
+                login: channel.login,
+                data: typeof liveData === 'undefined' ? [] : liveData,
+              });
+            });
+          }
+        });
     },
   },
   computed: {
+    streamers() {
+      return this.$store.state.streamers;
+    },
+    livestreams() {
+      return this.$store.state.livestreams;
+    },
     filteredStreamers() {
       const self = this;
-      if (self.$streamers) {
-        return self.$streamers.sort((a, b) => {
-          // Sort streamers per position then by last live
-          if (a.position === b.position) {
-            const aLive = a.last_live.toDate();
-            const bLive = b.last_live.toDate();
-            if (aLive < bLive) {
-              return 1;
-            }
-            if (aLive > bLive) {
-              return -1;
-            }
-            return 0;
+      return self.streamers.sort((a, b) => {
+        // Sort streamers per position then by last live
+        if (a.position === b.position) {
+          const aLive = a.last_live.toDate();
+          const bLive = b.last_live.toDate();
+          if (aLive < bLive) {
+            return 1;
           }
-          return (a.position < b.position) ? -1 : 1;
-        });
-      }
-      return [];
+          if (aLive > bLive) {
+            return -1;
+          }
+          return 0;
+        }
+        return a.position < b.position ? -1 : 1;
+      });
     },
   },
   mounted() {
@@ -128,33 +113,41 @@ export default {
 <style lang="scss">
 .stream-list {
   &-wrapper {
-    position: relative;
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: 60px 1fr;
+
+    @media screen and (min-width: $screen-md) {
+      grid-template-columns: 1fr 4fr;
+      grid-template-rows: 480px;
+    }
   }
 
   &-users {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 25%;
+    overflow-y: hidden;
+    text-align: left;
 
     @media screen and (min-width: $screen-md) {
-      width: 10%;
-    }
-
-    @media screen and (min-width: $screen-lg) {
-      width: 8%;
+      overflow-y: auto;
+      justify-self: end;
     }
   }
 
   &-user {
     box-shadow: none;
-    border:0;
-    display: block;
+    border: 0;
+    display: inline-block;
     cursor: pointer;
-    margin-bottom: 10px;
+    max-width: 60px;
     outline: 0;
     padding: 0;
     position: relative;
+
+    @media screen and (min-width: $screen-md) {
+      display: block;
+      margin-bottom: 10px;
+      max-width: 80px;
+    }
 
     img {
       display: block;
@@ -163,15 +156,24 @@ export default {
       max-width: 100%;
     }
 
+    &:hover {
+      img {
+        filter: grayscale(75%);
+        outline: 2px solid #fff;
+        outline-offset: -4px;
+      }
+    }
+
     .svg-inline--fa {
       display: none;
       bottom: 50%;
-      color: #FFF;
+      color: #fff;
       height: auto;
       position: absolute;
       right: 50%;
       transform: translate(50%, 50%);
       width: 60%;
+      z-index: 2;
 
       @media screen and (min-width: $screen-md) {
         bottom: 8px;
@@ -185,12 +187,32 @@ export default {
       img {
         filter: none;
       }
+
+      &::after {
+        animation: 15s infinite linear fadeInOut;
+        bottom: 6px;
+        color: #fff;
+        content: 'Live 🔴';
+        display: block;
+        font-weight: bold;
+        left: 50%;
+        position: absolute;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000, 1px 1px 0 #000;
+        transform: translateX(-50%);
+        white-space: nowrap;
+
+        @media screen and (min-width: $screen-md) {
+          font-size: 16px;
+          left: 8px;
+          transform: none;
+        }
+      }
     }
 
     &.active {
       img {
         outline: 2px solid $primary;
-        outline-offset: -6px;
+        outline-offset: -4px;
       }
 
       .svg-inline--fa {
@@ -209,35 +231,44 @@ export default {
   }
 
   &-players {
-    margin-left: 25%;
-    min-height: 480px;
     position: relative;
-    width: 75%;
 
     @media screen and (min-width: $screen-md) {
-      margin-left: 10%;
-      width: 90%;
-    }
-
-    @media screen and (min-width: $screen-lg) {
-      margin-left: 8%;
-      width: 92%;
+      min-height: 480px;
     }
 
     > div {
-      position: absolute;
+      bottom: 0;
       left: 0;
+      opacity: 0;
+      position: absolute;
       right: 0;
       top: 0;
-      bottom: 0;
-      opacity: 0;
-      transition: opacity ease-in-out .3s;
+      transition: opacity ease-in-out 0.3s;
 
       &.active {
+        display: block;
         opacity: 1;
-        z-index: 3;
       }
     }
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
   }
 }
 </style>
