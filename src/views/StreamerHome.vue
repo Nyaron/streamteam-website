@@ -1,16 +1,11 @@
 <template>
   <div class="streamer-home">
-    <single-stream
-      :streamer-channel="channel"
-      is-active
-      show-chat
-      >
-    </single-stream>
+    <single-stream :streamer-channel="channel" is-active show-chat></single-stream>
   </div>
 </template>
 
 <script>
-import SingleStream from './SingleStream';
+import SingleStream from '@/components/SingleStream';
 
 export default {
   name: 'StreamerHome',

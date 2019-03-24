@@ -3,33 +3,35 @@
     <div class="nav-title" :title="streamerType | capitalize">
       {{ channel | capitalize }}
       <font-awesome-icon
-        :icon="streamerType === 'affiliate' ? 'star' :
-        streamerType === 'partner' ? 'check-circle' :
-        ''">
+        v-if="streamerType !== ''"
+        :icon="
+          streamerType === 'affiliate' ? 'star' : streamerType === 'partner' ? 'check-circle' : ''
+        "
+      >
       </font-awesome-icon>
     </div>
-    <router-link
-      to="/"
-      :style="{ color: genColor }"
-      exact>
+    <router-link to="/" :style="{ color: genColor }" exact>
       Accueil
     </router-link>
     <router-link
-      :to="{ name: 'streamer-home', params: { channel: channel }}"
+      :to="{ name: 'streamer-home', params: { channel: channel } }"
       :style="{ color: genColor }"
-      exact>
+      exact
+    >
       Stream
     </router-link>
     <router-link
-      :to="{ name: 'about', params: { channel: channel }}"
+      :to="{ name: 'about', params: { channel: channel } }"
       :style="{ color: genColor }"
-      exact>
+      exact
+    >
       À propos
     </router-link>
     <router-link
-      :to="{ name: 'schedule', params: { channel: channel }}"
+      :to="{ name: 'schedule', params: { channel: channel } }"
       :style="{ color: genColor }"
-      exact>
+      exact
+    >
       Planning
     </router-link>
   </div>
@@ -49,9 +51,10 @@ export default {
   computed: {
     streamerType() {
       const self = this;
-      if (self.$streamers) {
-        const curr = self.$streamers.find(streamer =>
-          streamer.login === self.$route.params.channel);
+      if (self.$store.state.streamers) {
+        const curr = self.$store.state.streamers.find(
+          streamer => streamer.login === self.$route.params.channel
+        );
         return curr.broadcaster_type ? curr.broadcaster_type : '';
       }
       return '';
@@ -62,12 +65,12 @@ export default {
 
 <style lang="scss">
 .streamer-nav {
-  background-color: rgba(255, 255, 255, .1);
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: 2em;
   color: $primary;
   display: inline-block;
   margin-bottom: 15px;
-  padding: .5em;
+  padding: 0.5em;
 
   a[href],
   .nav-title {
